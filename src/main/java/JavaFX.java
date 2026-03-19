@@ -36,11 +36,11 @@ public class JavaFX extends Application {
 
 	//Forecast Scene
 	private Label forecastCityLabel;
-	private Label day1Label;
-	private Label day2Label;
-	private Label day3Label;
-	private Label day4Label;
-	private Label day5Label;
+	private HBox day1Card;
+	private HBox day2Card;
+	private HBox day3Card;
+	private HBox day4Card;
+	private HBox day5Card;
 
 	//Details Scene
 	private Label detailsCityLabel;
@@ -70,6 +70,7 @@ public class JavaFX extends Application {
 
 		window.setScene(homeScene);
 		window.show();
+		window.setMaximized(true);
 	}
 
 	private void initializeCityMap() {
@@ -119,11 +120,11 @@ public class JavaFX extends Application {
 
 		Button viewForecastButton = new Button("View Forecast");
 		viewForecastButton.setStyle(buttonStyle());
-		viewForecastButton.setOnAction(e -> window.setScene(forecastScene));
+		viewForecastButton.setOnAction(e -> switchScene(forecastScene));
 
 		Button viewDetailsButton = new Button("View Details");
 		viewDetailsButton.setStyle(buttonStyle());
-		viewDetailsButton.setOnAction(e -> window.setScene(detailsScene));
+		viewDetailsButton.setOnAction(e -> switchScene(detailsScene));
 
 		HBox navButtons = new HBox(12, viewForecastButton, viewDetailsButton);
 		navButtons.setAlignment(Pos.CENTER);
@@ -156,6 +157,7 @@ public class JavaFX extends Application {
 		homeScene = new Scene(root, 700, 650);
 	}
 
+
 	private void buildForecastScene() {
 		Label titleLabel = new Label("Forecast");
 		titleLabel.setStyle("-fx-font-size: 28px; -fx-font-weight: bold; -fx-text-fill: #1c3d5a;");
@@ -163,32 +165,32 @@ public class JavaFX extends Application {
 		forecastCityLabel = new Label();
 		forecastCityLabel.setStyle("-fx-font-size: 22px; -fx-font-weight: bold;");
 
-		day1Label = createForecastCard();
-		day2Label = createForecastCard();
-		day3Label = createForecastCard();
-		day4Label = createForecastCard();
-		day5Label = createForecastCard();
+		day1Card = createForecastCard();
+		day2Card = createForecastCard();
+		day3Card = createForecastCard();
+		day4Card = createForecastCard();
+		day5Card = createForecastCard();
 
-		VBox forecastBox = new VBox(12, day1Label, day2Label, day3Label, day4Label, day5Label);
+		VBox forecastBox = new VBox(18, day1Card, day2Card, day3Card, day4Card, day5Card);
 		forecastBox.setAlignment(Pos.CENTER);
 
 		Button backButton = new Button("Back Home");
 		backButton.setStyle(buttonStyle());
-		backButton.setOnAction(e -> window.setScene(homeScene));
+		backButton.setOnAction(e -> switchScene(homeScene));
 
 		Button detailsButton = new Button("Go To Details");
 		detailsButton.setStyle(buttonStyle());
-		detailsButton.setOnAction(e -> window.setScene(detailsScene));
+		detailsButton.setOnAction(e -> switchScene(detailsScene));
 
 		HBox navButtons = new HBox(12, backButton, detailsButton);
 		navButtons.setAlignment(Pos.CENTER);
 
 		VBox root = new VBox(20, titleLabel, forecastCityLabel, forecastBox, navButtons);
-		root.setAlignment(Pos.CENTER);
+		root.setAlignment(Pos.TOP_CENTER);
 		root.setPadding(new Insets(30));
 		root.setStyle("-fx-background-color: linear-gradient(to bottom, #9ed8ff, #eef9ff);");
 
-		forecastScene = new Scene(root, 700, 650);
+		forecastScene = new Scene(root, 700, 850);
 	}
 
 	private void buildDetailsScene() {
@@ -237,11 +239,11 @@ public class JavaFX extends Application {
 
 		Button backHomeButton = new Button("Back Home");
 		backHomeButton.setStyle(buttonStyle());
-		backHomeButton.setOnAction(e -> window.setScene(homeScene));
+		backHomeButton.setOnAction(e -> switchScene(homeScene));
 
 		Button forecastButton = new Button("Forecast Scene");
 		forecastButton.setStyle(buttonStyle());
-		forecastButton.setOnAction(e -> window.setScene(forecastScene));
+		forecastButton.setOnAction(e -> switchScene(forecastScene));
 
 		HBox navButtons = new HBox(12, backHomeButton, forecastButton);
 		navButtons.setAlignment(Pos.CENTER);
@@ -254,20 +256,23 @@ public class JavaFX extends Application {
 		detailsScene = new Scene(root, 700, 650);
 	}
 
-	private Label createForecastCard() {
-		Label label = new Label();
-		label.setMinHeight(70);
-		label.setPrefWidth(500);
-		label.setWrapText(true);
-		label.setPadding(new Insets(15));
-		label.setStyle(
+	private HBox createForecastCard() {
+		HBox card = new HBox();
+		card.setAlignment(Pos.CENTER_LEFT);
+		card.setSpacing(25);
+		card.setPadding(new Insets(20));
+		card.setPrefWidth(520);
+		card.setMinHeight(140);
+		card.setMaxHeight(140);
+
+		card.setStyle(
 				"-fx-background-color: white;" +
 						"-fx-background-radius: 16;" +
 						"-fx-border-color: #d9e6f2;" +
-						"-fx-border-radius: 16;" +
-						"-fx-font-size: 15px;"
+						"-fx-border-radius: 16;"
 		);
-		return label;
+
+		return card;
 	}
 
 	private void searchCity() {
@@ -309,18 +314,15 @@ public class JavaFX extends Application {
 
 		// Home scene
 		homeCityLabel.setText(currentCity);
-		homeDayLabel.setText(current.startTime.toInstant().atZone(java.time.ZoneId.systemDefault()).getDayOfWeek().toString());
+		String day = current.startTime.toInstant().atZone(java.time.ZoneId.systemDefault()).getDayOfWeek().toString();
+		homeDayLabel.setText(day.substring(0, 1) + day.substring(1).toLowerCase());
 		homeTempLabel.setText(current.temperature + "°" + current.temperatureUnit);
 		homeForecastLabel.setText(current.shortForecast);
 		homeWeatherImage.setImage(getWeatherImage(current.shortForecast));
 
 		// Forecast scene
-		forecastCityLabel.setText(currentCity + " Forecast");
-		setForecastLabel(day1Label, 0);
-		setForecastLabel(day2Label, 1);
-		setForecastLabel(day3Label, 2);
-		setForecastLabel(day4Label, 3);
-		setForecastLabel(day5Label, 4);
+		forecastCityLabel.setText(currentCity + " 5-Day Forecast");
+		updateFiveDayForecastCards();
 
 		// Details scene
 		detailsCityLabel.setText(currentCity);
@@ -337,17 +339,90 @@ public class JavaFX extends Application {
 		detailsLongForecastLabel.setText("Details: " + current.detailedForecast);
 	}
 
-	private void setForecastLabel(Label label, int index) {
-		if (currentForecast.size() > index) {
-			Period p = currentForecast.get(index);
-			label.setText(
-					p.name + "\n" +
-							"Temp: " + p.temperature + "°" + p.temperatureUnit + "\n" +
-							"Forecast: " + p.shortForecast
-			);
-		} else {
-			label.setText("No data available");
+	private void updateFiveDayForecastCards() {
+		HBox[] cards = {day1Card, day2Card, day3Card, day4Card, day5Card};
+
+		ArrayList<DayForecast> dailyForecasts = buildDailyForecasts();
+
+		for (int x = 0; x < cards.length; x++) {
+			cards[x].getChildren().clear();
+
+			if (x < dailyForecasts.size()) {
+				DayForecast df = dailyForecasts.get(x);
+
+				Label dayNameLabel = new Label(df.dayName);
+				dayNameLabel.setStyle("-fx-font-size: 22px; -fx-font-weight: bold;");
+				dayNameLabel.setMinWidth(170);
+				dayNameLabel.setPrefWidth(170);
+				dayNameLabel.setMaxWidth(170);
+				dayNameLabel.setWrapText(true);
+
+				VBox detailsBox = new VBox(8);
+				detailsBox.setAlignment(Pos.CENTER_LEFT);
+				detailsBox.setFillWidth(true);
+				detailsBox.setPrefWidth(360);
+
+				String dayForecast = "N/A";
+				String dayTemp = "N/A";
+				String dayWind = "N/A";
+
+				String nightForecast = "N/A";
+				String nightTemp = "N/A";
+				String nightWind = "N/A";
+
+				if (df.dayPeriod != null) {
+					dayForecast = df.dayPeriod.shortForecast;
+					dayTemp = df.dayPeriod.temperature + "°" + df.dayPeriod.temperatureUnit;
+					dayWind = df.dayPeriod.windSpeed + " " + df.dayPeriod.windDirection;
+				}
+
+				if (df.nightPeriod != null) {
+					nightForecast = df.nightPeriod.shortForecast;
+					nightTemp = df.nightPeriod.temperature + "°" + df.nightPeriod.temperatureUnit;
+					nightWind = df.nightPeriod.windSpeed + " " + df.nightPeriod.windDirection;
+				}
+
+				Label dayDetails = new Label("Forecast: " + dayForecast + "\n" + "Temp: " + dayTemp + "\n" + "Wind: " + dayWind);
+				dayDetails.setStyle("-fx-font-size: 15px;");
+				dayDetails.setMaxWidth(360);
+				dayDetails.setWrapText(true);
+
+				Label nightDetails = new Label("Night Forecast: " + nightForecast + "\n" + "Temp: " + nightTemp + "\n" + "Wind: " + nightWind);
+				nightDetails.setStyle("-fx-font-size: 15px;");
+				nightDetails.setMaxWidth(360);
+				nightDetails.setWrapText(true);
+
+				detailsBox.getChildren().addAll(dayDetails, nightDetails);
+
+				cards[x].getChildren().addAll(dayNameLabel, detailsBox);
+			} else {
+				Label noDataLabel = new Label("No data available");
+				noDataLabel.setStyle("-fx-font-size: 16px;");
+				cards[x].getChildren().add(noDataLabel);
+			}
 		}
+	}
+
+	private ArrayList<DayForecast> buildDailyForecasts() {
+		ArrayList<DayForecast> dailyForecasts = new ArrayList<>();
+
+		for (int x = 0; x < currentForecast.size() && dailyForecasts.size() < 5; x++) {
+			Period current = currentForecast.get(x);
+
+			if (current.isDaytime) {
+				DayForecast df = new DayForecast();
+				df.dayName = current.name;
+				df.dayPeriod = current;
+
+				if (x + 1 < currentForecast.size() && !currentForecast.get(x + 1).isDaytime) {
+					df.nightPeriod = currentForecast.get(x + 1);
+				}
+
+				dailyForecasts.add(df);
+			}
+		}
+
+		return dailyForecasts;
 	}
 
 	private Image getWeatherImage(String shortForecast) {
@@ -376,6 +451,14 @@ public class JavaFX extends Application {
 		}
 	}
 
+	private void switchScene(Scene scene) {
+		boolean wasMaximized = window.isMaximized();
+		boolean wasFullScreen = window.isFullScreen();
+
+		window.setScene(scene);
+		window.setMaximized(wasMaximized);
+		window.setFullScreen(wasFullScreen);
+	}
 	private String buttonStyle() {
 		return "-fx-background-color: #2d89ef;" +
 				"-fx-text-fill: white;" +
@@ -383,6 +466,12 @@ public class JavaFX extends Application {
 				"-fx-font-weight: bold;" +
 				"-fx-background-radius: 12;" +
 				"-fx-padding: 10 18 10 18;";
+	}
+
+	private static class DayForecast {
+		String dayName;
+		Period dayPeriod;
+		Period nightPeriod;
 	}
 
 	public static void main(String[] args) {

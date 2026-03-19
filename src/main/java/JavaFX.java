@@ -28,6 +28,7 @@ public class JavaFX extends Application {
 
 	//Home Scene
 	private Label homeCityLabel;
+	private Label homeDayLabel;
 	private Label homeTempLabel;
 	private Label homeForecastLabel;
 	private ImageView homeWeatherImage;
@@ -98,6 +99,8 @@ public class JavaFX extends Application {
 		searchBar.setAlignment(Pos.CENTER);
 
 		homeCityLabel = new Label();
+		homeDayLabel = new Label();
+		homeDayLabel.setStyle("-fx-font-size: 18px; -fx-text-fill: #4a6572;");
 		homeCityLabel.setStyle("-fx-font-size: 26px; -fx-font-weight: bold;");
 
 		homeWeatherImage = new ImageView();
@@ -112,6 +115,7 @@ public class JavaFX extends Application {
 		homeForecastLabel.setStyle("-fx-font-size: 18px;");
 		homeForecastLabel.setWrapText(true);
 		homeForecastLabel.setMaxWidth(380);
+		homeForecastLabel.setAlignment(Pos.CENTER);
 
 		Button viewForecastButton = new Button("View Forecast");
 		viewForecastButton.setStyle(buttonStyle());
@@ -129,6 +133,7 @@ public class JavaFX extends Application {
 
 		VBox weatherCard = new VBox(15,
 				homeCityLabel,
+				homeDayLabel,
 				homeWeatherImage,
 				homeTempLabel,
 				homeForecastLabel
@@ -304,6 +309,7 @@ public class JavaFX extends Application {
 
 		// Home scene
 		homeCityLabel.setText(currentCity);
+		homeDayLabel.setText(current.startTime.toInstant().atZone(java.time.ZoneId.systemDefault()).getDayOfWeek().toString());
 		homeTempLabel.setText(current.temperature + "°" + current.temperatureUnit);
 		homeForecastLabel.setText(current.shortForecast);
 		homeWeatherImage.setImage(getWeatherImage(current.shortForecast));

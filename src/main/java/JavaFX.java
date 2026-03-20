@@ -12,6 +12,8 @@ import javafx.scene.image.ImageView;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
 import javafx.scene.layout.Priority;
+import javafx.scene.layout.BorderPane;
+import javafx.scene.layout.StackPane;
 import javafx.stage.Stage;
 import weather.Period;
 import weather.WeatherAPI;
@@ -30,28 +32,40 @@ public class JavaFX extends Application {
 	private TextField cityInput;
 
 	//Home Scene
+	private Label homeTitleLabel;
 	private Label homeCityLabel;
 	private Label homeDayLabel;
 	private Label homeTempLabel;
 	private Label homeForecastLabel;
 	private ImageView homeWeatherImage;
 	private Label statusLabel;
+	private VBox homeWeatherCard;
+	private VBox homeRootContent;
 
 	//Forecast Scene
+	private Label forecastTitleLabel;
 	private Label forecastCityLabel;
 	private HBox day1Card;
 	private HBox day2Card;
 	private HBox day3Card;
 	private HBox day4Card;
 	private HBox day5Card;
+	private VBox forecastRootContent;
 
 	//Details Scene
+	private Label detailsTitleLabel;
 	private Label detailsCityLabel;
 	private Label detailsTempLabel;
 	private Label detailsWindLabel;
 	private Label detailsPrecipLabel;
 	private Label detailsLongForecastLabel;
 	private ImageView detailsWeatherImage;
+	private VBox detailsCard;
+	private VBox detailsRootContent;
+
+	private boolean darkMode = false;
+	private final ArrayList<Button> themeButtons = new ArrayList<>();
+	private final ArrayList<Label> themeLabels = new ArrayList<>();
 
 
 	private final Map<String, LocationInfo> cityMap = new HashMap<>();
@@ -70,6 +84,7 @@ public class JavaFX extends Application {
 		buildDetailsScene();
 
 		loadWeather("Chicago");
+		applyTheme();
 
 		window.setScene(homeScene);
 		window.setMinWidth(900);
@@ -88,8 +103,8 @@ public class JavaFX extends Application {
 	}
 
 	private void buildHomeScene() {
-		Label titleLabel = new Label("Weather App");
-		titleLabel.setStyle("-fx-font-size: 30px; -fx-font-weight: bold; -fx-text-fill: #1c3d5a;");
+		homeTitleLabel = new Label("Weather App");
+		homeTitleLabel.setStyle("-fx-font-size: 30px; -fx-font-weight: bold; -fx-text-fill: #1c3d5a;");
 
 		cityInput = new TextField();
 		cityInput.setPromptText("Search city");
@@ -133,38 +148,49 @@ public class JavaFX extends Application {
 		HBox navButtons = new HBox(12, viewForecastButton, viewDetailsButton);
 		navButtons.setAlignment(Pos.CENTER);
 
-		statusLabel = new Label();
-		statusLabel.setStyle("-fx-text-fill: red; -fx-font-size: 13px;");
-
-		VBox weatherCard = new VBox(15,
+		homeWeatherCard = new VBox(15,
 				homeCityLabel,
 				homeDayLabel,
 				homeWeatherImage,
 				homeTempLabel,
 				homeForecastLabel
 		);
-		weatherCard.setAlignment(Pos.CENTER);
-		weatherCard.setPadding(new Insets(25));
-		weatherCard.setMaxWidth(430);
-		weatherCard.setStyle(
+		homeWeatherCard.setAlignment(Pos.CENTER);
+		homeWeatherCard.setPadding(new Insets(25));
+		homeWeatherCard.setMaxWidth(430);
+		homeWeatherCard.setStyle(
 				"-fx-background-color: white;" +
 						"-fx-background-radius: 20;" +
 						"-fx-border-color: #d9e6f2;" +
 						"-fx-border-radius: 20;"
 		);
 
-		VBox root = new VBox(20, titleLabel, searchBar, weatherCard, navButtons, statusLabel);
-		root.setAlignment(Pos.CENTER);
-		root.setPadding(new Insets(30));
+		homeRootContent = new VBox(16, homeTitleLabel, searchBar, homeWeatherCard, navButtons);
+		homeRootContent.setAlignment(Pos.CENTER);
+		homeRootContent.setPadding(new Insets(25));
+
+		statusLabel = new Label();
+		statusLabel.setStyle("-fx-text-fill: red; -fx-font-size: 13px; -fx-font-weight: bold;");
+		statusLabel.setVisible(false);
+		statusLabel.setManaged(true);
+
+		StackPane centerPane = new StackPane(homeRootContent, statusLabel);
+		centerPane.setPadding(new Insets(0, 0, 25, 0));
+
+		StackPane.setAlignment(statusLabel, Pos.BOTTOM_CENTER);
+		StackPane.setMargin(statusLabel, new Insets(0, 0, 5, 0));
+
+		BorderPane root = new BorderPane();
+		root.setCenter(centerPane);
+		root.setBottom(createBottomBar());
 		root.setStyle("-fx-background-color: linear-gradient(to bottom, #87ceeb, #dff4ff);");
 
 		homeScene = new Scene(root, 1000, 700);
 	}
 
-
 	private void buildForecastScene() {
-		Label titleLabel = new Label("Forecast");
-		titleLabel.setStyle("-fx-font-size: 28px; -fx-font-weight: bold; -fx-text-fill: #1c3d5a;");
+		forecastTitleLabel = new Label("Forecast");
+		forecastTitleLabel.setStyle("-fx-font-size: 28px; -fx-font-weight: bold; -fx-text-fill: #1c3d5a;");
 
 		forecastCityLabel = new Label();
 		forecastCityLabel.setStyle("-fx-font-size: 22px; -fx-font-weight: bold;");
@@ -182,7 +208,6 @@ public class JavaFX extends Application {
 
 		ScrollPane scrollPane = new ScrollPane(forecastCards);
 		scrollPane.setFitToWidth(true);
-		scrollPane.setPrefViewportWidth(1000);
 		scrollPane.setPannable(true);
 		scrollPane.setStyle("-fx-background: transparent; -fx-background-color: transparent;");
 
@@ -197,19 +222,22 @@ public class JavaFX extends Application {
 		HBox navButtons = new HBox(12, backButton, detailsButton);
 		navButtons.setAlignment(Pos.CENTER);
 
-		VBox root = new VBox(20, titleLabel, forecastCityLabel, scrollPane, navButtons);
-		root.setAlignment(Pos.TOP_CENTER);
-		root.setPadding(new Insets(25));
-		root.setStyle("-fx-background-color: linear-gradient(to bottom, #9ed8ff, #eef9ff);");
-
+		forecastRootContent = new VBox(20, forecastTitleLabel, forecastCityLabel, scrollPane, navButtons);
+		forecastRootContent.setAlignment(Pos.TOP_CENTER);
+		forecastRootContent.setPadding(new Insets(25));
 		VBox.setVgrow(scrollPane, Priority.ALWAYS);
+
+		BorderPane root = new BorderPane();
+		root.setCenter(forecastRootContent);
+		root.setBottom(createBottomBar());
+		root.setStyle("-fx-background-color: linear-gradient(to bottom, #9ed8ff, #eef9ff);");
 
 		forecastScene = new Scene(root, 1000, 700);
 	}
 
 	private void buildDetailsScene() {
-		Label titleLabel = new Label("Weather Details");
-		titleLabel.setStyle("-fx-font-size: 28px; -fx-font-weight: bold; -fx-text-fill: #1c3d5a;");
+		detailsTitleLabel = new Label("Weather Details");
+		detailsTitleLabel.setStyle("-fx-font-size: 28px; -fx-font-weight: bold; -fx-text-fill: #1c3d5a;");
 
 		detailsCityLabel = new Label();
 		detailsCityLabel.setStyle("-fx-font-size: 24px; -fx-font-weight: bold;");
@@ -233,7 +261,7 @@ public class JavaFX extends Application {
 		detailsLongForecastLabel.setMaxWidth(500);
 		detailsLongForecastLabel.setStyle("-fx-font-size: 15px;");
 
-		VBox detailsCard = new VBox(14,
+		detailsCard = new VBox(14,
 				detailsCityLabel,
 				detailsWeatherImage,
 				detailsTempLabel,
@@ -262,9 +290,13 @@ public class JavaFX extends Application {
 		HBox navButtons = new HBox(12, backHomeButton, forecastButton);
 		navButtons.setAlignment(Pos.CENTER);
 
-		VBox root = new VBox(20, titleLabel, detailsCard, navButtons);
-		root.setAlignment(Pos.CENTER);
-		root.setPadding(new Insets(30));
+		detailsRootContent = new VBox(20, detailsTitleLabel, detailsCard, navButtons);
+		detailsRootContent.setAlignment(Pos.CENTER);
+		detailsRootContent.setPadding(new Insets(30));
+
+		BorderPane root = new BorderPane();
+		root.setCenter(detailsRootContent);
+		root.setBottom(createBottomBar());
 		root.setStyle("-fx-background-color: linear-gradient(to bottom, #9ed8ff, #eef9ff);");
 
 		detailsScene = new Scene(root, 1000, 700);
@@ -283,6 +315,193 @@ public class JavaFX extends Application {
 		return card;
 	}
 
+	private VBox createThemeToggle() {
+		Button moonButton = new Button("☾");
+		moonButton.setMinSize(55, 55);
+		moonButton.setMaxSize(55, 55);
+		moonButton.setOnAction(e -> toggleDarkMode());
+
+		Label modeLabel = new Label("Dark Mode");
+		modeLabel.setStyle("-fx-font-size: 12px; -fx-font-weight: bold;");
+
+		themeButtons.add(moonButton);
+		themeLabels.add(modeLabel);
+
+		updateThemeButtonStyle(moonButton, modeLabel);
+
+		VBox toggleBox = new VBox(6, moonButton, modeLabel);
+		toggleBox.setAlignment(Pos.CENTER);
+		return toggleBox;
+	}
+
+	private void toggleDarkMode() {
+		darkMode = !darkMode;
+		applyTheme();
+	}
+
+	private void updateThemeButtonStyle(Button button, Label label) {
+		if (darkMode) {
+			button.setStyle(
+					"-fx-background-color: white;" +
+							"-fx-text-fill: black;" +
+							"-fx-font-size: 22px;" +
+							"-fx-font-weight: bold;" +
+							"-fx-background-radius: 30;" +
+							"-fx-border-radius: 30;" +
+							"-fx-border-color: #cccccc;"
+			);
+			label.setStyle("-fx-text-fill: white; -fx-font-size: 12px; -fx-font-weight: bold;");
+		} else {
+			button.setStyle(
+					"-fx-background-color: black;" +
+							"-fx-text-fill: white;" +
+							"-fx-font-size: 22px;" +
+							"-fx-font-weight: bold;" +
+							"-fx-background-radius: 30;" +
+							"-fx-border-radius: 30;" +
+							"-fx-border-color: #333333;"
+			);
+			label.setStyle("-fx-text-fill: #1c3d5a; -fx-font-size: 12px; -fx-font-weight: bold;");
+		}
+	}
+
+	private void applyTheme() {
+		for (int x = 0; x < themeButtons.size(); x++) {
+			updateThemeButtonStyle(themeButtons.get(x), themeLabels.get(x));
+		}
+
+		BorderPane homeRoot = (BorderPane) homeScene.getRoot();
+		BorderPane forecastRoot = (BorderPane) forecastScene.getRoot();
+		BorderPane detailsRoot = (BorderPane) detailsScene.getRoot();
+
+		if (darkMode) {
+			homeRoot.setStyle("-fx-background-color: linear-gradient(to bottom, #121212, #2b2b2b);");
+			forecastRoot.setStyle("-fx-background-color: linear-gradient(to bottom, #121212, #2b2b2b);");
+			detailsRoot.setStyle("-fx-background-color: linear-gradient(to bottom, #121212, #2b2b2b);");
+
+			homeWeatherCard.setStyle(
+					"-fx-background-color: #2f2f2f;" +
+							"-fx-background-radius: 20;" +
+							"-fx-border-color: #555555;" +
+							"-fx-border-radius: 20;"
+			);
+
+			detailsCard.setStyle(
+					"-fx-background-color: #2f2f2f;" +
+							"-fx-background-radius: 20;" +
+							"-fx-border-color: #555555;" +
+							"-fx-border-radius: 20;"
+			);
+
+			homeTitleLabel.setStyle("-fx-font-size: 30px; -fx-font-weight: bold; -fx-text-fill: white;");
+			forecastTitleLabel.setStyle("-fx-font-size: 28px; -fx-font-weight: bold; -fx-text-fill: white;");
+			detailsTitleLabel.setStyle("-fx-font-size: 28px; -fx-font-weight: bold; -fx-text-fill: white;");
+
+			homeCityLabel.setStyle("-fx-font-size: 26px; -fx-font-weight: bold; -fx-text-fill: white;");
+			homeDayLabel.setStyle("-fx-font-size: 18px; -fx-text-fill: #d0d0d0;");
+			homeTempLabel.setStyle("-fx-font-size: 24px; -fx-font-weight: bold; -fx-text-fill: white;");
+			homeForecastLabel.setStyle("-fx-font-size: 18px; -fx-text-fill: white;");
+			statusLabel.setStyle("-fx-text-fill: #ff7b7b; -fx-font-size: 13px;");
+
+			forecastCityLabel.setStyle("-fx-font-size: 22px; -fx-font-weight: bold; -fx-text-fill: white;");
+
+			detailsCityLabel.setStyle("-fx-font-size: 24px; -fx-font-weight: bold; -fx-text-fill: white;");
+			detailsTempLabel.setStyle("-fx-font-size: 18px; -fx-text-fill: white;");
+			detailsWindLabel.setStyle("-fx-font-size: 18px; -fx-text-fill: white;");
+			detailsPrecipLabel.setStyle("-fx-font-size: 18px; -fx-text-fill: white;");
+			detailsLongForecastLabel.setStyle("-fx-font-size: 15px; -fx-text-fill: white;");
+
+			cityInput.setStyle(
+					"-fx-background-color: #2f2f2f;" +
+							"-fx-text-fill: white;" +
+							"-fx-prompt-text-fill: #bbbbbb;" +
+							"-fx-background-radius: 10;" +
+							"-fx-border-radius: 10;" +
+							"-fx-border-color: #555555;"
+			);
+
+		} else {
+			homeRoot.setStyle("-fx-background-color: linear-gradient(to bottom, #87ceeb, #dff4ff);");
+			forecastRoot.setStyle("-fx-background-color: linear-gradient(to bottom, #9ed8ff, #eef9ff);");
+			detailsRoot.setStyle("-fx-background-color: linear-gradient(to bottom, #9ed8ff, #eef9ff);");
+
+			homeWeatherCard.setStyle(
+					"-fx-background-color: white;" +
+							"-fx-background-radius: 20;" +
+							"-fx-border-color: #d9e6f2;" +
+							"-fx-border-radius: 20;"
+			);
+
+			detailsCard.setStyle(
+					"-fx-background-color: white;" +
+							"-fx-background-radius: 20;" +
+							"-fx-border-color: #d9e6f2;" +
+							"-fx-border-radius: 20;"
+			);
+
+			homeTitleLabel.setStyle("-fx-font-size: 30px; -fx-font-weight: bold; -fx-text-fill: #1c3d5a;");
+			forecastTitleLabel.setStyle("-fx-font-size: 28px; -fx-font-weight: bold; -fx-text-fill: #1c3d5a;");
+			detailsTitleLabel.setStyle("-fx-font-size: 28px; -fx-font-weight: bold; -fx-text-fill: #1c3d5a;");
+
+			homeCityLabel.setStyle("-fx-font-size: 26px; -fx-font-weight: bold;");
+			homeDayLabel.setStyle("-fx-font-size: 18px; -fx-text-fill: #4a6572;");
+			homeTempLabel.setStyle("-fx-font-size: 24px; -fx-font-weight: bold;");
+			homeForecastLabel.setStyle("-fx-font-size: 18px; -fx-text-fill: black;");
+			statusLabel.setStyle("-fx-text-fill: red; -fx-font-size: 13px;");
+
+			forecastCityLabel.setStyle("-fx-font-size: 22px; -fx-font-weight: bold; -fx-text-fill: black;");
+
+			detailsCityLabel.setStyle("-fx-font-size: 24px; -fx-font-weight: bold;");
+			detailsTempLabel.setStyle("-fx-font-size: 18px; -fx-text-fill: black;");
+			detailsWindLabel.setStyle("-fx-font-size: 18px; -fx-text-fill: black;");
+			detailsPrecipLabel.setStyle("-fx-font-size: 18px; -fx-text-fill: black;");
+			detailsLongForecastLabel.setStyle("-fx-font-size: 15px; -fx-text-fill: black;");
+
+			cityInput.setStyle("");
+		}
+
+		updateForecastCardTheme();
+	}
+
+	private HBox createBottomBar() {
+		VBox themeToggle = createThemeToggle();
+
+		HBox bottomBar = new HBox(themeToggle);
+		bottomBar.setAlignment(Pos.CENTER_RIGHT);
+		bottomBar.setPadding(new Insets(0, 20, 20, 0));
+		bottomBar.setMinHeight(135);
+		bottomBar.setPrefHeight(135);
+		bottomBar.setMaxHeight(135);
+
+		return bottomBar;
+	}
+
+	private void updateForecastCardTheme() {
+		HBox[] cards = {day1Card, day2Card, day3Card, day4Card, day5Card};
+
+		for (HBox card : cards) {
+			if (darkMode) {
+				card.setStyle(
+						"-fx-background-color: #2f2f2f;" +
+								"-fx-background-radius: 16;" +
+								"-fx-border-color: #555555;" +
+								"-fx-border-radius: 16;"
+				);
+			} else {
+				card.setStyle(
+						"-fx-background-color: white;" +
+								"-fx-background-radius: 16;" +
+								"-fx-border-color: #d9e6f2;" +
+								"-fx-border-radius: 16;"
+				);
+			}
+		}
+
+		if (currentForecast != null) {
+			updateFiveDayForecastCards();
+		}
+	}
+
 	private void searchCity() {
 		String city = cityInput.getText().trim();
 		if (!city.isEmpty()) {
@@ -292,11 +511,14 @@ public class JavaFX extends Application {
 
 	private void loadWeather(String cityName) {
 		statusLabel.setText("");
+		statusLabel.setVisible(false);
+
 
 		LocationInfo location = cityMap.get(cityName.toLowerCase());
 
 		if (location == null) {
 			statusLabel.setText("City not available. Try Chicago, New York, Los Angeles, Houston, Atlanta, Miami, or Seattle.");
+			statusLabel.setVisible(true);
 			return;
 		}
 
@@ -304,6 +526,7 @@ public class JavaFX extends Application {
 
 		if (forecast == null || forecast.isEmpty()) {
 			statusLabel.setText("Forecast did not load.");
+			statusLabel.setVisible(true);
 			return;
 		}
 
@@ -345,6 +568,8 @@ public class JavaFX extends Application {
 		}
 
 		detailsLongForecastLabel.setText("Details: " + current.detailedForecast);
+
+		applyTheme();
 	}
 
 	private void updateFiveDayForecastCards() {
@@ -378,7 +603,7 @@ public class JavaFX extends Application {
 				}
 
 				Label periodLabel = new Label(df.dayName);
-				periodLabel.setStyle("-fx-font-size: 22px; -fx-font-weight: bold; -fx-text-fill: #1c1c1c;");
+				periodLabel.setStyle(cardTitleStyle());
 				periodLabel.setMinWidth(140);
 				periodLabel.setPrefWidth(140);
 				periodLabel.setMaxWidth(140);
@@ -389,13 +614,13 @@ public class JavaFX extends Application {
 				dayColumn.setPrefWidth(210);
 
 				Label dayHeader = new Label("Day");
-				dayHeader.setStyle("-fx-font-size: 16px; -fx-font-weight: bold; -fx-text-fill: #1c1c1c;");
+				dayHeader.setStyle(cardHeaderStyle());
 
 				Label dayInfo = new Label(
 						"Forecast: " + dayForecast + "\n" +
 								"Temp: " + dayTemp
 				);
-				dayInfo.setStyle("-fx-font-size: 15px; -fx-text-fill: #1c1c1c;");
+				dayInfo.setStyle(cardBodyStyle());
 				dayInfo.setWrapText(true);
 				dayInfo.setMaxWidth(200);
 
@@ -406,13 +631,13 @@ public class JavaFX extends Application {
 				nightColumn.setPrefWidth(250);
 
 				Label nightHeader = new Label("Night");
-				nightHeader.setStyle("-fx-font-size: 16px; -fx-font-weight: bold; -fx-text-fill: #1c1c1c;");
+				nightHeader.setStyle(cardHeaderStyle());
 
 				Label nightInfo = new Label(
 						"Forecast: " + nightForecast + "\n" +
 								"Temp: " + nightTemp
 				);
-				nightInfo.setStyle("-fx-font-size: 15px; -fx-text-fill: #1c1c1c;");
+				nightInfo.setStyle(cardBodyStyle());
 				nightInfo.setWrapText(true);
 				nightInfo.setMaxWidth(240);
 
@@ -423,13 +648,13 @@ public class JavaFX extends Application {
 				windColumn.setPrefWidth(220);
 
 				Label windHeader = new Label("Wind");
-				windHeader.setStyle("-fx-font-size: 16px; -fx-font-weight: bold; -fx-text-fill: #1c1c1c;");
+				windHeader.setStyle(cardHeaderStyle());
 
 				Label windInfo = new Label(
 						"Day: " + dayWind + "\n" +
 								"Night: " + nightWind
 				);
-				windInfo.setStyle("-fx-font-size: 15px; -fx-text-fill: #1c1c1c;");
+				windInfo.setStyle(cardBodyStyle());
 				windInfo.setWrapText(true);
 				windInfo.setMaxWidth(210);
 
@@ -445,10 +670,31 @@ public class JavaFX extends Application {
 				windColumn.setMaxWidth(Double.MAX_VALUE);
 			} else {
 				Label noDataLabel = new Label("No data available");
-				noDataLabel.setStyle("-fx-font-size: 16px; -fx-text-fill: #1c1c1c;");
+				noDataLabel.setStyle(cardBodyStyle());
 				cards[x].getChildren().add(noDataLabel);
 			}
 		}
+	}
+
+	private String cardTitleStyle() {
+		if (darkMode) {
+			return "-fx-font-size: 22px; -fx-font-weight: bold; -fx-text-fill: white;";
+		}
+		return "-fx-font-size: 22px; -fx-font-weight: bold; -fx-text-fill: #1c1c1c;";
+	}
+
+	private String cardHeaderStyle() {
+		if (darkMode) {
+			return "-fx-font-size: 16px; -fx-font-weight: bold; -fx-text-fill: white;";
+		}
+		return "-fx-font-size: 16px; -fx-font-weight: bold; -fx-text-fill: #1c1c1c;";
+	}
+
+	private String cardBodyStyle() {
+		if (darkMode) {
+			return "-fx-font-size: 15px; -fx-text-fill: #e6e6e6;";
+		}
+		return "-fx-font-size: 15px; -fx-text-fill: #1c1c1c;";
 	}
 
 	private ArrayList<DayForecast> buildDailyForecasts() {

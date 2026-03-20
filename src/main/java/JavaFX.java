@@ -1,14 +1,17 @@
 import javafx.application.Application;
+import javafx.application.Platform;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Scene;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.control.TextField;
+import javafx.scene.control.ScrollPane;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
+import javafx.scene.layout.Priority;
 import javafx.stage.Stage;
 import weather.Period;
 import weather.WeatherAPI;
@@ -69,8 +72,9 @@ public class JavaFX extends Application {
 		loadWeather("Chicago");
 
 		window.setScene(homeScene);
+		window.setMinWidth(900);
+		window.setMinHeight(650);
 		window.show();
-		window.setMaximized(true);
 	}
 
 	private void initializeCityMap() {
@@ -154,7 +158,7 @@ public class JavaFX extends Application {
 		root.setPadding(new Insets(30));
 		root.setStyle("-fx-background-color: linear-gradient(to bottom, #87ceeb, #dff4ff);");
 
-		homeScene = new Scene(root, 700, 650);
+		homeScene = new Scene(root, 1000, 700);
 	}
 
 
@@ -171,8 +175,16 @@ public class JavaFX extends Application {
 		day4Card = createForecastCard();
 		day5Card = createForecastCard();
 
-		VBox forecastBox = new VBox(18, day1Card, day2Card, day3Card, day4Card, day5Card);
-		forecastBox.setAlignment(Pos.CENTER);
+		VBox forecastCards = new VBox(18, day1Card, day2Card, day3Card, day4Card, day5Card);
+		forecastCards.setFillWidth(true);
+		forecastCards.setAlignment(Pos.TOP_CENTER);
+		forecastCards.setPadding(new Insets(10));
+
+		ScrollPane scrollPane = new ScrollPane(forecastCards);
+		scrollPane.setFitToWidth(true);
+		scrollPane.setPrefViewportWidth(1000);
+		scrollPane.setPannable(true);
+		scrollPane.setStyle("-fx-background: transparent; -fx-background-color: transparent;");
 
 		Button backButton = new Button("Back Home");
 		backButton.setStyle(buttonStyle());
@@ -185,12 +197,14 @@ public class JavaFX extends Application {
 		HBox navButtons = new HBox(12, backButton, detailsButton);
 		navButtons.setAlignment(Pos.CENTER);
 
-		VBox root = new VBox(20, titleLabel, forecastCityLabel, forecastBox, navButtons);
+		VBox root = new VBox(20, titleLabel, forecastCityLabel, scrollPane, navButtons);
 		root.setAlignment(Pos.TOP_CENTER);
-		root.setPadding(new Insets(30));
+		root.setPadding(new Insets(25));
 		root.setStyle("-fx-background-color: linear-gradient(to bottom, #9ed8ff, #eef9ff);");
 
-		forecastScene = new Scene(root, 700, 850);
+		VBox.setVgrow(scrollPane, Priority.ALWAYS);
+
+		forecastScene = new Scene(root, 1000, 700);
 	}
 
 	private void buildDetailsScene() {
@@ -253,24 +267,18 @@ public class JavaFX extends Application {
 		root.setPadding(new Insets(30));
 		root.setStyle("-fx-background-color: linear-gradient(to bottom, #9ed8ff, #eef9ff);");
 
-		detailsScene = new Scene(root, 700, 650);
+		detailsScene = new Scene(root, 1000, 700);
 	}
 
 	private HBox createForecastCard() {
 		HBox card = new HBox();
 		card.setAlignment(Pos.CENTER_LEFT);
-		card.setSpacing(25);
-		card.setPadding(new Insets(20));
-		card.setPrefWidth(520);
-		card.setMinHeight(140);
-		card.setMaxHeight(140);
+		card.setSpacing(30);
+		card.setPadding(new Insets(18));
+		card.setMaxWidth(Double.MAX_VALUE);
+		card.setPrefHeight(120);
 
-		card.setStyle(
-				"-fx-background-color: white;" +
-						"-fx-background-radius: 16;" +
-						"-fx-border-color: #d9e6f2;" +
-						"-fx-border-radius: 16;"
-		);
+		card.setStyle("-fx-background-color: white;" + "-fx-background-radius: 16;" + "-fx-border-color: #d9e6f2;" + "-fx-border-radius: 16;");
 
 		return card;
 	}
@@ -350,24 +358,11 @@ public class JavaFX extends Application {
 			if (x < dailyForecasts.size()) {
 				DayForecast df = dailyForecasts.get(x);
 
-				Label dayNameLabel = new Label(df.dayName);
-				dayNameLabel.setStyle("-fx-font-size: 22px; -fx-font-weight: bold;");
-				dayNameLabel.setMinWidth(170);
-				dayNameLabel.setPrefWidth(170);
-				dayNameLabel.setMaxWidth(170);
-				dayNameLabel.setWrapText(true);
-
-				VBox detailsBox = new VBox(8);
-				detailsBox.setAlignment(Pos.CENTER_LEFT);
-				detailsBox.setFillWidth(true);
-				detailsBox.setPrefWidth(360);
-
 				String dayForecast = "N/A";
 				String dayTemp = "N/A";
-				String dayWind = "N/A";
-
 				String nightForecast = "N/A";
 				String nightTemp = "N/A";
+				String dayWind = "N/A";
 				String nightWind = "N/A";
 
 				if (df.dayPeriod != null) {
@@ -382,22 +377,75 @@ public class JavaFX extends Application {
 					nightWind = df.nightPeriod.windSpeed + " " + df.nightPeriod.windDirection;
 				}
 
-				Label dayDetails = new Label("Forecast: " + dayForecast + "\n" + "Temp: " + dayTemp + "\n" + "Wind: " + dayWind);
-				dayDetails.setStyle("-fx-font-size: 15px;");
-				dayDetails.setMaxWidth(360);
-				dayDetails.setWrapText(true);
+				Label periodLabel = new Label(df.dayName);
+				periodLabel.setStyle("-fx-font-size: 22px; -fx-font-weight: bold; -fx-text-fill: #1c1c1c;");
+				periodLabel.setMinWidth(140);
+				periodLabel.setPrefWidth(140);
+				periodLabel.setMaxWidth(140);
+				periodLabel.setWrapText(true);
 
-				Label nightDetails = new Label("Night Forecast: " + nightForecast + "\n" + "Temp: " + nightTemp + "\n" + "Wind: " + nightWind);
-				nightDetails.setStyle("-fx-font-size: 15px;");
-				nightDetails.setMaxWidth(360);
-				nightDetails.setWrapText(true);
+				VBox dayColumn = new VBox(6);
+				dayColumn.setAlignment(Pos.CENTER_LEFT);
+				dayColumn.setPrefWidth(210);
 
-				detailsBox.getChildren().addAll(dayDetails, nightDetails);
+				Label dayHeader = new Label("Day");
+				dayHeader.setStyle("-fx-font-size: 16px; -fx-font-weight: bold; -fx-text-fill: #1c1c1c;");
 
-				cards[x].getChildren().addAll(dayNameLabel, detailsBox);
+				Label dayInfo = new Label(
+						"Forecast: " + dayForecast + "\n" +
+								"Temp: " + dayTemp
+				);
+				dayInfo.setStyle("-fx-font-size: 15px; -fx-text-fill: #1c1c1c;");
+				dayInfo.setWrapText(true);
+				dayInfo.setMaxWidth(200);
+
+				dayColumn.getChildren().addAll(dayHeader, dayInfo);
+
+				VBox nightColumn = new VBox(6);
+				nightColumn.setAlignment(Pos.CENTER_LEFT);
+				nightColumn.setPrefWidth(250);
+
+				Label nightHeader = new Label("Night");
+				nightHeader.setStyle("-fx-font-size: 16px; -fx-font-weight: bold; -fx-text-fill: #1c1c1c;");
+
+				Label nightInfo = new Label(
+						"Forecast: " + nightForecast + "\n" +
+								"Temp: " + nightTemp
+				);
+				nightInfo.setStyle("-fx-font-size: 15px; -fx-text-fill: #1c1c1c;");
+				nightInfo.setWrapText(true);
+				nightInfo.setMaxWidth(240);
+
+				nightColumn.getChildren().addAll(nightHeader, nightInfo);
+
+				VBox windColumn = new VBox(6);
+				windColumn.setAlignment(Pos.CENTER_LEFT);
+				windColumn.setPrefWidth(220);
+
+				Label windHeader = new Label("Wind");
+				windHeader.setStyle("-fx-font-size: 16px; -fx-font-weight: bold; -fx-text-fill: #1c1c1c;");
+
+				Label windInfo = new Label(
+						"Day: " + dayWind + "\n" +
+								"Night: " + nightWind
+				);
+				windInfo.setStyle("-fx-font-size: 15px; -fx-text-fill: #1c1c1c;");
+				windInfo.setWrapText(true);
+				windInfo.setMaxWidth(210);
+
+				windColumn.getChildren().addAll(windHeader, windInfo);
+
+				cards[x].getChildren().addAll(periodLabel, dayColumn, nightColumn, windColumn);
+
+				HBox.setHgrow(dayColumn, Priority.ALWAYS);
+				HBox.setHgrow(nightColumn, Priority.ALWAYS);
+				HBox.setHgrow(windColumn, Priority.ALWAYS);
+				dayColumn.setMaxWidth(Double.MAX_VALUE);
+				nightColumn.setMaxWidth(Double.MAX_VALUE);
+				windColumn.setMaxWidth(Double.MAX_VALUE);
 			} else {
 				Label noDataLabel = new Label("No data available");
-				noDataLabel.setStyle("-fx-font-size: 16px;");
+				noDataLabel.setStyle("-fx-font-size: 16px; -fx-text-fill: #1c1c1c;");
 				cards[x].getChildren().add(noDataLabel);
 			}
 		}
@@ -456,9 +504,13 @@ public class JavaFX extends Application {
 		boolean wasFullScreen = window.isFullScreen();
 
 		window.setScene(scene);
-		window.setMaximized(wasMaximized);
-		window.setFullScreen(wasFullScreen);
+
+		Platform.runLater(() -> {
+			window.setFullScreen(wasFullScreen);
+			window.setMaximized(wasMaximized);
+		});
 	}
+
 	private String buttonStyle() {
 		return "-fx-background-color: #2d89ef;" +
 				"-fx-text-fill: white;" +

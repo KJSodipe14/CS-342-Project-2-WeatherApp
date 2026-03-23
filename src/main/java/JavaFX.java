@@ -260,6 +260,8 @@ public class JavaFX extends Application {
 		detailsLongForecastLabel.setWrapText(true);
 		detailsLongForecastLabel.setMaxWidth(500);
 		detailsLongForecastLabel.setStyle("-fx-font-size: 15px;");
+		detailsLongForecastLabel.setAlignment(Pos.CENTER);
+		detailsLongForecastLabel.setTextAlignment(javafx.scene.text.TextAlignment.CENTER);
 
 		detailsCard = new VBox(14,
 				detailsCityLabel,
@@ -291,11 +293,16 @@ public class JavaFX extends Application {
 		navButtons.setAlignment(Pos.CENTER);
 
 		detailsRootContent = new VBox(20, detailsTitleLabel, detailsCard, navButtons);
-		detailsRootContent.setAlignment(Pos.CENTER);
+		detailsRootContent.setAlignment(Pos.TOP_CENTER);
 		detailsRootContent.setPadding(new Insets(30));
 
+		ScrollPane scrollPane = new ScrollPane(detailsRootContent);
+		scrollPane.setFitToWidth(true);
+		scrollPane.setPannable(true);
+		scrollPane.setStyle("-fx-background: transparent; -fx-background-color: transparent;");
+
 		BorderPane root = new BorderPane();
-		root.setCenter(detailsRootContent);
+		root.setCenter(scrollPane);
 		root.setBottom(createBottomBar());
 		root.setStyle("-fx-background-color: linear-gradient(to bottom, #9ed8ff, #eef9ff);");
 

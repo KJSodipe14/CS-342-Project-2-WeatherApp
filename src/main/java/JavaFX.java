@@ -16,11 +16,77 @@ import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.StackPane;
 import javafx.stage.Stage;
 import weather.Period;
-import weather.WeatherAPI;
 
 import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Map;
+
+//SceneTemplate is an abstract class that acts as a blueprint for building the Home, Forecast, and Details scenes.
+abstract class SceneTemplate {
+	//buildScene method builds and returns the fully constructed scene.
+	public Scene buildScene() {
+		//Initializes a new BorderPane layout.
+		BorderPane root = new BorderPane();
+
+		//Using the subclass implementation createCenter we set the center of the layout.
+		root.setCenter(createCenter());
+		//Like the above we use the implementation createBottom to set the bottom of the layout.
+		root.setBottom(createBottom());
+
+		//This applies the style of the scene. *This is how we can change the mode from light to dark mode.*
+		applyStyle(root);
+
+		//Returns the final Scene with a fixed width and height of 1000 x 700
+		return new Scene(root, 1000, 700);
+	}
+
+	//Abstract method which makes the subclasses define what goes in the center.
+	protected abstract javafx.scene.Node createCenter();
+
+	//Abstract method which makes the subclasses define what goes in the bottom.
+	protected abstract javafx.scene.Node createBottom();
+
+	//Abstract method which makes the subclassses define how the style is applied.
+	protected abstract void applyStyle(BorderPane root);
+}
+
+//WeatherAdapter class is used to simplify and format the raw weather data from the Period object.
+class WeatherAdapter {
+
+	//Stores the Period object which contains raw weather data.
+	private Period period;
+
+	//Constructor initializes the adapter with a specific Period object.
+	public WeatherAdapter(Period period) {
+		this.period = period;
+	}
+
+	//Returns the temperature as a formatted string * 72°F *
+	public String getTemperature() {
+		return period.temperature + "°" + period.temperatureUnit;
+	}
+
+	//Returns the short forecast description * Partly Cloudy *
+	public String getShortForecast() {
+		return period.shortForecast;
+	}
+
+	//Returns the wind speed and direction as a formatted string.
+	public String getWind() {
+		return period.windSpeed + " " + period.windDirection;
+	}
+
+	//Returns the chance of precipitation if available, otherwise returns N/A.
+	public String getPrecipitation() {
+		if (period.probabilityOfPrecipitation != null) {
+			return period.probabilityOfPrecipitation.value + "%";
+		}
+		return "N/A";
+	}
+
+	//Returns the detailed forecast description.
+	public String getDetailedForecast() {
+		return period.detailedForecast;
+	}
+}
 
 public class JavaFX extends Application {
 	private Stage window;
@@ -67,8 +133,6 @@ public class JavaFX extends Application {
 	private final ArrayList<Button> themeButtons = new ArrayList<>();
 	private final ArrayList<Label> themeLabels = new ArrayList<>();
 
-
-	private final Map<String, LocationInfo> cityMap = new HashMap<>();
 	private ArrayList<Period> currentForecast;
 	private String currentCity = "Chicago";
 
@@ -77,12 +141,11 @@ public class JavaFX extends Application {
 		window = primaryStage;
 		window.setTitle("Weather App");
 
-		initializeCityMap();
-
 		buildHomeScene();
 		buildForecastScene();
 		buildDetailsScene();
 
+		cityInput.setText("Chicago");
 		loadWeather("Chicago");
 		applyTheme();
 
@@ -90,16 +153,6 @@ public class JavaFX extends Application {
 		window.setMinWidth(900);
 		window.setMinHeight(650);
 		window.show();
-	}
-
-	private void initializeCityMap() {
-		cityMap.put("chicago", new LocationInfo("Chicago", "LOT", 77, 70));
-		cityMap.put("new york", new LocationInfo("New York", "OKX", 33, 35));
-		cityMap.put("los angeles", new LocationInfo("Los Angeles", "LOX", 154, 44));
-		cityMap.put("houston", new LocationInfo("Houston", "HGX", 52, 88));
-		cityMap.put("atlanta", new LocationInfo("Atlanta", "FFC", 52, 88));
-		cityMap.put("miami", new LocationInfo("Miami", "MFL", 110, 50));
-		cityMap.put("seattle", new LocationInfo("Seattle", "SEW", 125, 67));
 	}
 
 	private void buildHomeScene() {
@@ -180,12 +233,30 @@ public class JavaFX extends Application {
 		StackPane.setAlignment(statusLabel, Pos.BOTTOM_CENTER);
 		StackPane.setMargin(statusLabel, new Insets(0, 0, 5, 0));
 
-		BorderPane root = new BorderPane();
-		root.setCenter(centerPane);
-		root.setBottom(createBottomBar());
-		root.setStyle("-fx-background-color: linear-gradient(to bottom, #87ceeb, #dff4ff);");
+		//Creating a SceneTemplate object for the Home Scene.
+		SceneTemplate homeTemplate = new SceneTemplate() {
 
-		homeScene = new Scene(root, 1000, 700);
+			//Defines what will be placed in the center of the Home scene.
+			@Override
+			protected javafx.scene.Node createCenter() {
+				return centerPane;
+			}
+
+			//Defines what will be placed at the bottom of the home scene.
+			@Override
+			protected javafx.scene.Node createBottom() {
+				return createBottomBar();
+			}
+
+			//Applies the light blue gradient background style to the Home scene.
+			@Override
+			protected void applyStyle(BorderPane root) {
+				root.setStyle("-fx-background-color: linear-gradient(to bottom, #87ceeb, #dff4ff);");
+			}
+		};
+
+		//Builds the Home scene using the template structure defined in SceneTemplate.
+		homeScene = homeTemplate.buildScene();
 	}
 
 	private void buildForecastScene() {
@@ -227,12 +298,30 @@ public class JavaFX extends Application {
 		forecastRootContent.setPadding(new Insets(25));
 		VBox.setVgrow(scrollPane, Priority.ALWAYS);
 
-		BorderPane root = new BorderPane();
-		root.setCenter(forecastRootContent);
-		root.setBottom(createBottomBar());
-		root.setStyle("-fx-background-color: linear-gradient(to bottom, #9ed8ff, #eef9ff);");
+		//Creating a SceneTemplate object for the Forecast scene.
+		SceneTemplate forecastTemplate = new SceneTemplate() {
 
-		forecastScene = new Scene(root, 1000, 700);
+			//Defines what will be placed in the center of the Forecast scene.
+			@Override
+			protected javafx.scene.Node createCenter() {
+				return forecastRootContent;
+			}
+
+			//Defines what will be placed at the bottom of the Forecast scene.
+			@Override
+			protected javafx.scene.Node createBottom() {
+				return createBottomBar();
+			}
+
+			//Applies a slightly different blue gradient style to the Forecast scene.
+			@Override
+			protected void applyStyle(BorderPane root) {
+				root.setStyle("-fx-background-color: linear-gradient(to bottom, #9ed8ff, #eef9ff);");
+			}
+		};
+
+		//Builds the Forecast scene using the template structure.
+		forecastScene = forecastTemplate.buildScene();
 	}
 
 	private void buildDetailsScene() {
@@ -301,12 +390,30 @@ public class JavaFX extends Application {
 		scrollPane.setPannable(true);
 		scrollPane.setStyle("-fx-background: transparent; -fx-background-color: transparent;");
 
-		BorderPane root = new BorderPane();
-		root.setCenter(scrollPane);
-		root.setBottom(createBottomBar());
-		root.setStyle("-fx-background-color: linear-gradient(to bottom, #9ed8ff, #eef9ff);");
+		//Creating a SceneTemplate object for the Details scene.
+		SceneTemplate detailsTemplate = new SceneTemplate() {
 
-		detailsScene = new Scene(root, 1000, 700);
+			//Defines what will be placed in the center of the Scrollable etails scene.
+			@Override
+			protected javafx.scene.Node createCenter() {
+				return scrollPane;
+			}
+
+			//Defines what will be placed at the bottom of the Details scene.
+			@Override
+			protected javafx.scene.Node createBottom() {
+				return createBottomBar();
+			}
+
+			//Applies the same gradient as the Forecast scene to the Details scene.
+			@Override
+			protected void applyStyle(BorderPane root) {
+				root.setStyle("-fx-background-color: linear-gradient(to bottom, #9ed8ff, #eef9ff);");
+			}
+		};
+
+		//Builds the Details scene using the template structure.
+		detailsScene = detailsTemplate.buildScene();
 	}
 
 	private HBox createForecastCard() {
@@ -520,62 +627,77 @@ public class JavaFX extends Application {
 		statusLabel.setText("");
 		statusLabel.setVisible(false);
 
-
-		LocationInfo location = cityMap.get(cityName.toLowerCase());
-
-		if (location == null) {
-			statusLabel.setText("City not available. Try Chicago, New York, Los Angeles, Houston, Atlanta, Miami, or Seattle.");
+		if (cityName == null || cityName.trim().isEmpty()) {
+			statusLabel.setText("Please enter a city name.");
 			statusLabel.setVisible(true);
 			return;
 		}
 
-		ArrayList<Period> forecast = WeatherAPI.getForecast(location.region, location.gridX, location.gridY);
+		String cleanCity = cityName.trim();
+		ArrayList<Period> forecast = MyWeatherAPI.getForecastForCity(cleanCity);
+
+		if ((forecast == null || forecast.isEmpty()) && cleanCity.equalsIgnoreCase("Chicago")) {
+			forecast = weather.WeatherAPI.getForecast("LOT", 77, 70);
+		}
 
 		if (forecast == null || forecast.isEmpty()) {
-			statusLabel.setText("Forecast did not load.");
+			statusLabel.setText("City not found or NWS data unavailable.");
 			statusLabel.setVisible(true);
 			return;
 		}
 
 		currentForecast = forecast;
-		currentCity = location.displayName;
+		currentCity = formatCityName(cleanCity);
 
 		updateScenes();
 	}
 
+	//updateScenes method updates all scenes with current weather data.
 	private void updateScenes() {
+		//If there is no forecast data available, exit the method.
 		if (currentForecast == null || currentForecast.isEmpty()) {
 			return;
 		}
 
-		Period current = currentForecast.get(0);
+		//Creates a WeatherAdapter object for the current forecast period.
+		WeatherAdapter current = new WeatherAdapter(currentForecast.get(0));
 
-		// Home scene
+		//Home scene
+		//Sets the city name on the home screen.
 		homeCityLabel.setText(currentCity);
-		String day = current.startTime.toInstant().atZone(java.time.ZoneId.systemDefault()).getDayOfWeek().toString();
+		//Gets the raw Period object to extract and format the day of the week.
+		Period raw = currentForecast.get(0);
+		String day = raw.startTime.toInstant().atZone(java.time.ZoneId.systemDefault()).getDayOfWeek().toString();
+		//Formats the day string from MONDAY to Monday and sets it.
 		homeDayLabel.setText(day.substring(0, 1) + day.substring(1).toLowerCase());
-		homeTempLabel.setText(current.temperature + "°" + current.temperatureUnit);
-		homeForecastLabel.setText(current.shortForecast);
-		homeWeatherImage.setImage(getWeatherImage(current.shortForecast));
+		//Sets the temperature using the adapter.
+		homeTempLabel.setText(current.getTemperature());
+		//Sets the short forecast description.
+		homeForecastLabel.setText(current.getShortForecast());
+		//Sets the weather image based on the forecast.
+		homeWeatherImage.setImage(getWeatherImage(current.getShortForecast()));
 
 		// Forecast scene
+		//Sets the forecast title with the city name.
 		forecastCityLabel.setText(currentCity + " 5-Day Forecast");
+		//Updates the 5-day forecast cards.
 		updateFiveDayForecastCards();
 
 		// Details scene
+		//Sets the city name on the Details screen.
 		detailsCityLabel.setText(currentCity);
-		detailsWeatherImage.setImage(getWeatherImage(current.shortForecast));
-		detailsTempLabel.setText("Temperature: " + current.temperature + "°" + current.temperatureUnit);
-		detailsWindLabel.setText("Wind: " + current.windSpeed + " " + current.windDirection);
+		//Sets the weather image for the Details screen.
+		detailsWeatherImage.setImage(getWeatherImage(current.getShortForecast()));
+		//Sets the temperature with a label.
+		detailsTempLabel.setText("Temperature: " + current.getTemperature());
+		//Sets the wind information.
+		detailsWindLabel.setText("Wind: " + current.getWind());
+		//Sets the precipitation chance.
+		detailsPrecipLabel.setText("Chance of precipitation: " + current.getPrecipitation());
+		//Sets the detailed forecast description.
+		detailsLongForecastLabel.setText("Details: " + current.getDetailedForecast());
 
-		if (current.probabilityOfPrecipitation != null) {
-			detailsPrecipLabel.setText("Chance of precipitation: " + current.probabilityOfPrecipitation.value + "%");
-		} else {
-			detailsPrecipLabel.setText("Chance of precipitation: N/A");
-		}
-
-		detailsLongForecastLabel.setText("Details: " + current.detailedForecast);
-
+		//Applies the current theme either light or dark mode to all scenes.
 		applyTheme();
 	}
 
@@ -726,6 +848,25 @@ public class JavaFX extends Application {
 		return dailyForecasts;
 	}
 
+	private String formatCityName(String cityName) {
+		String[] parts = cityName.trim().toLowerCase().split("\\s+");
+		StringBuilder formatted = new StringBuilder();
+
+		for (int x = 0; x < parts.length; x++) {
+			if (!parts[x].isEmpty()) {
+				formatted.append(parts[x].substring(0, 1).toUpperCase());
+				if (parts[x].length() > 1) {
+					formatted.append(parts[x].substring(1));
+				}
+				if (x < parts.length - 1) {
+					formatted.append(" ");
+				}
+			}
+		}
+
+		return formatted.toString();
+	}
+
 	private Image getWeatherImage(String shortForecast) {
 		String forecastText = shortForecast.toLowerCase();
 		String imagePath;
@@ -781,19 +922,5 @@ public class JavaFX extends Application {
 
 	public static void main(String[] args) {
 		launch(args);
-	}
-
-	private static class LocationInfo {
-		String displayName;
-		String region;
-		int gridX;
-		int gridY;
-
-		LocationInfo(String displayName, String region, int gridX, int gridY) {
-			this.displayName = displayName;
-			this.region = region;
-			this.gridX = gridX;
-			this.gridY = gridY;
-		}
 	}
 }

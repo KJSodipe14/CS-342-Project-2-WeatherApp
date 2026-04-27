@@ -52,6 +52,8 @@ src/
 - Add hourly forecast support
 - Enhance UI responsiveness for different screen sizes
 
+## Demo
+Link to drive: https://drive.google.com/drive/u/1/folders/1Y9lItmDExRjOObUTaAbwwIIuPKaEUwP2
 ## Creators
 Olukolajo Sodipe
 Joseph Labib
